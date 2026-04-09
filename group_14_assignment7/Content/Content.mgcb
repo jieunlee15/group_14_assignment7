@@ -12,4 +12,11 @@
 
 
 #---------------------------------- Content ---------------------------------#
-
+#begin duck_hop.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:duck_hop.png
+#begin duck_idle.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/build:duck_idle.png
