@@ -1,6 +1,12 @@
-﻿using Microsoft.Xna.Framework;
+﻿// Group 14:
+// group member 1: tanmayee bharadwaj; tpb675
+// group member 2: nicco faelnar; nvf89
+// group member 3: jieun lee; jl83729
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+
 
 namespace group_14_assignment7;
 
