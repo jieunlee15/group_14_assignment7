@@ -20,6 +20,11 @@ namespace group_14_assignment7
         
         private Texture2D _gridTexture;
 
+        private Vehicle[] vehicles;
+        
+        // Game Logic
+        private int score;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -32,6 +37,7 @@ namespace group_14_assignment7
 
         protected override void Initialize()
         {
+            score = 0;
             base.Initialize();
         }
 
@@ -80,6 +86,7 @@ namespace group_14_assignment7
                 Exit();
 
             _player.Update(gameTime);
+            CheckPlayerCollision();
 
             base.Update(gameTime);
         }
@@ -114,6 +121,18 @@ namespace group_14_assignment7
                 {
                     Vector2 position = new Vector2(offsetX + x * gridSize, offsetY + y * gridSize);
                     _spriteBatch.Draw(_gridTexture, position, Color.White);
+                }
+            }
+        }
+
+        private void CheckPlayerCollision()
+        {
+            foreach (Vehicle vehicle in vehicles)
+            {
+                if (_player.GetBounds().Intersects(vehicle.GetCollider()))
+                {
+                    // Player got hit, lose a life and reset to bottom of screen
+                    return;
                 }
             }
         }
