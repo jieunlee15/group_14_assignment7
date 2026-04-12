@@ -3,6 +3,8 @@
 // group member 2: nicco faelnar; nvf89
 // group member 3: jieun lee; jl83729
 
+using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -24,6 +26,12 @@ namespace group_14_assignment7
         
         // Game Logic
         private int score;
+        private int farthestThisScreen;
+        
+        private string scoreText = "Score: 0";
+        private SpriteFont _font;
+        private Vector2 scorePosition;
+        private Color scoreColor = Color.White;
 
         public Game1()
         {
@@ -31,13 +39,17 @@ namespace group_14_assignment7
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             
-            _graphics.PreferredBackBufferWidth = 1280;
-            _graphics.PreferredBackBufferHeight = 720;
+            _graphics.PreferredBackBufferWidth = 640;
+            _graphics.PreferredBackBufferHeight = 705;
         }
 
         protected override void Initialize()
         {
             score = 0;
+            farthestThisScreen = 10;
+            
+            
+            
             base.Initialize();
         }
 
@@ -54,6 +66,11 @@ namespace group_14_assignment7
             
             // Create simple grid texture
             CreateGridTexture();
+            
+            // Load font
+            _font = Content.Load<SpriteFont>("font/fredokaOneRegular");
+            scoreText = "Score: " + score.ToString();
+            scorePosition = new Vector2(5, 5);
         }
 
         private void CreateGridTexture()
@@ -86,8 +103,10 @@ namespace group_14_assignment7
                 Exit();
 
             _player.Update(gameTime);
-            CheckPlayerCollision();
-
+            //CheckPlayerCollision();
+            UpdateScore();
+            CheckPlayerOffScreen();
+            
             base.Update(gameTime);
         }
 
@@ -103,6 +122,19 @@ namespace group_14_assignment7
             // Draw player
             _player.Draw(_spriteBatch);
             
+            // Draw score
+            _spriteBatch.DrawString(
+                _font,
+                scoreText,
+                scorePosition,
+                scoreColor,
+                0,
+                Vector2.Zero,
+                1,
+                SpriteEffects.None,
+                0
+            );
+            
             _spriteBatch.End();
 
             base.Draw(gameTime);
@@ -111,11 +143,11 @@ namespace group_14_assignment7
         private void DrawGrid()
         {
             int gridSize = 64;
-            int offsetX = 400;
-            int offsetY = 100;
+            int offsetX = 0;
+            int offsetY = 0;
             
-            // Draw 10x15 grid
-            for (int y = 0; y < 15; y++)
+            // Draw 10x11 grid
+            for (int y = 0; y < 11; y++)
             {
                 for (int x = 0; x < 10; x++)
                 {
@@ -134,6 +166,29 @@ namespace group_14_assignment7
                     // Player got hit, lose a life and reset to bottom of screen
                     return;
                 }
+            }
+        }
+
+        private void CheckPlayerOffScreen()
+        {
+            if (_player.PixelPosition.Y < 0 && !_player._isMoving)
+            {
+                // Put player back at the bottom of the screen
+                _player.ResetPosition();
+                // Reset farthest
+                farthestThisScreen = 10;
+                
+                // Place new vehicle lanes
+            }
+        }
+
+        private void UpdateScore()
+        {
+            if (_player.GridPosition.Y < farthestThisScreen)
+            {
+                score++;
+                farthestThisScreen--;
+                scoreText = "Score: " + score.ToString();
             }
         }
     }

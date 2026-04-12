@@ -16,8 +16,8 @@ namespace group_14_assignment7
         public Vector2 PixelPosition { get; private set; }
         
         private const int GRID_SIZE = 64;
-        private const int SCREEN_OFFSET_X = 400;
-        private const int SCREEN_OFFSET_Y = 100;
+        private const int SCREEN_OFFSET_X = 0;
+        private const int SCREEN_OFFSET_Y = 0;
         
         // Animation
         private int _animationFrame;
@@ -25,7 +25,7 @@ namespace group_14_assignment7
         private const float ANIMATION_SPEED = 0.15f;
         
         // Movement
-        private bool _isMoving;
+        public bool _isMoving;
         private Vector2 _targetGridPosition;
         private float _moveTimer;
         private const float MOVE_DURATION = 0.2f;
@@ -213,10 +213,15 @@ namespace group_14_assignment7
             );
         }
 
-        public void Reset()
+        public void ResetPosition()
         {
             GridPosition = new Vector2(5, 10); // Starting position
             PixelPosition = GridToPixel(GridPosition);
+        }
+
+        public void Reset()
+        {
+            ResetPosition();
             IsAlive = true;
             _isMoving = false;
             _moveTimer = 0f;
