@@ -118,9 +118,12 @@ namespace group_14_assignment7
             CheckPlayerCollision();
             UpdateScore();
             CheckPlayerOffScreen();
-            
-            vehicles[0].Move();
-            
+
+            foreach (Vehicle vehicle in vehicles)
+            {
+                vehicle.Move();
+            }
+
             base.Update(gameTime);
         }
 
@@ -148,8 +151,11 @@ namespace group_14_assignment7
                 SpriteEffects.None,
                 0
             );
-            
-            vehicles[0].Draw(_spriteBatch);
+
+            foreach (Vehicle vehicle in vehicles)
+            {
+                vehicle.Draw(_spriteBatch);
+            }
             
             _spriteBatch.End();
 
