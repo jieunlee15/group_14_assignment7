@@ -3,6 +3,8 @@
 // group member 2: nicco faelnar; nvf89
 // group member 3: jieun lee; jl83729
 
+using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -20,18 +22,34 @@ namespace group_14_assignment7
         
         private Texture2D _gridTexture;
 
+        private Vehicle[] vehicles;
+        
+        // Game Logic
+        private int score;
+        private int farthestThisScreen;
+        
+        private string scoreText = "Score: 0";
+        private SpriteFont _font;
+        private Vector2 scorePosition;
+        private Color scoreColor = Color.White;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             
-            _graphics.PreferredBackBufferWidth = 1280;
-            _graphics.PreferredBackBufferHeight = 720;
+            _graphics.PreferredBackBufferWidth = 640;
+            _graphics.PreferredBackBufferHeight = 705;
         }
 
         protected override void Initialize()
         {
+            score = 0;
+            farthestThisScreen = 10;
+            
+            
+            
             base.Initialize();
         }
 
@@ -48,6 +66,23 @@ namespace group_14_assignment7
             
             // Create simple grid texture
             CreateGridTexture();
+            
+            // Load font
+            _font = Content.Load<SpriteFont>("font/fredokaOneRegular");
+            scoreText = "Score: " + score.ToString();
+            scorePosition = new Vector2(5, 5);
+            
+            // Load vehicle
+            vehicles = new Vehicle[1];
+            vehicles[0] = new Vehicle(
+                Content.Load<Texture2D>("vehicles/blueCar"),
+                new  Vector2(700, 200),
+                new Vector2(-5, 0),
+                _player,
+                new Vector2(Window.ClientBounds.X, Window.ClientBounds.Y),
+                true,
+                0.2f
+            );
         }
 
         private void CreateGridTexture()
@@ -80,6 +115,14 @@ namespace group_14_assignment7
                 Exit();
 
             _player.Update(gameTime);
+            CheckPlayerCollision();
+            UpdateScore();
+            CheckPlayerOffScreen();
+
+            foreach (Vehicle vehicle in vehicles)
+            {
+                vehicle.Move();
+            }
 
             base.Update(gameTime);
         }
@@ -96,6 +139,24 @@ namespace group_14_assignment7
             // Draw player
             _player.Draw(_spriteBatch);
             
+            // Draw score
+            _spriteBatch.DrawString(
+                _font,
+                scoreText,
+                scorePosition,
+                scoreColor,
+                0,
+                Vector2.Zero,
+                1,
+                SpriteEffects.None,
+                0
+            );
+
+            foreach (Vehicle vehicle in vehicles)
+            {
+                vehicle.Draw(_spriteBatch);
+            }
+            
             _spriteBatch.End();
 
             base.Draw(gameTime);
@@ -104,17 +165,53 @@ namespace group_14_assignment7
         private void DrawGrid()
         {
             int gridSize = 64;
-            int offsetX = 400;
-            int offsetY = 100;
+            int offsetX = 0;
+            int offsetY = 0;
             
-            // Draw 10x15 grid
-            for (int y = 0; y < 15; y++)
+            // Draw 10x11 grid
+            for (int y = 0; y < 11; y++)
             {
                 for (int x = 0; x < 10; x++)
                 {
                     Vector2 position = new Vector2(offsetX + x * gridSize, offsetY + y * gridSize);
                     _spriteBatch.Draw(_gridTexture, position, Color.White);
                 }
+            }
+        }
+
+        private void CheckPlayerCollision()
+        {
+            foreach (Vehicle vehicle in vehicles)
+            {
+                if (_player.GetBounds().Intersects(vehicle.GetCollider()))
+                {
+                    // Player got hit, you lose screen
+                    Console.WriteLine("YEAHOWOHCH");
+                    return;
+                }
+            }
+        }
+
+        private void CheckPlayerOffScreen()
+        {
+            if (_player.PixelPosition.Y < 0 && !_player._isMoving)
+            {
+                // Put player back at the bottom of the screen
+                _player.ResetPosition();
+                // Reset farthest
+                farthestThisScreen = 10;
+                
+                // Place new vehicle lanes
+            }
+        }
+
+        private void UpdateScore()
+        {
+            if (_player.GridPosition.Y < farthestThisScreen)
+            {
+                score++;
+                farthestThisScreen--;
+                scoreText = "Score: " + score.ToString();
             }
         }
     }
