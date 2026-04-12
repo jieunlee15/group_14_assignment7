@@ -71,6 +71,18 @@ namespace group_14_assignment7
             _font = Content.Load<SpriteFont>("font/fredokaOneRegular");
             scoreText = "Score: " + score.ToString();
             scorePosition = new Vector2(5, 5);
+            
+            // Load vehicle
+            vehicles = new Vehicle[1];
+            vehicles[0] = new Vehicle(
+                Content.Load<Texture2D>("vehicles/blueCar"),
+                new  Vector2(700, 200),
+                new Vector2(-5, 0),
+                _player,
+                new Vector2(Window.ClientBounds.X, Window.ClientBounds.Y),
+                true,
+                0.2f
+            );
         }
 
         private void CreateGridTexture()
@@ -103,9 +115,11 @@ namespace group_14_assignment7
                 Exit();
 
             _player.Update(gameTime);
-            //CheckPlayerCollision();
+            CheckPlayerCollision();
             UpdateScore();
             CheckPlayerOffScreen();
+            
+            vehicles[0].Move();
             
             base.Update(gameTime);
         }
@@ -135,6 +149,8 @@ namespace group_14_assignment7
                 0
             );
             
+            vehicles[0].Draw(_spriteBatch);
+            
             _spriteBatch.End();
 
             base.Draw(gameTime);
@@ -163,7 +179,8 @@ namespace group_14_assignment7
             {
                 if (_player.GetBounds().Intersects(vehicle.GetCollider()))
                 {
-                    // Player got hit, lose a life and reset to bottom of screen
+                    // Player got hit, you lose screen
+                    Console.WriteLine("YEAHOWOHCH");
                     return;
                 }
             }
