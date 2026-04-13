@@ -15,7 +15,8 @@ namespace group_14_assignment7
     {
         Playing,
         GameOver,
-        Victory
+        Victory,
+        Paused
     }
 
     public class Game1 : Game
@@ -156,7 +157,14 @@ namespace group_14_assignment7
             KeyboardState currentKeyState = Keyboard.GetState();
 
             if (currentKeyState.IsKeyDown(Keys.Escape))
+            {
                 Exit();
+            }
+
+            if (currentKeyState.IsKeyDown(Keys.Tab) && !_previousKeyState.IsKeyDown(Keys.Tab))
+            {
+                PauseGame();
+            }
 
             switch (_currentState)
             {
@@ -177,6 +185,7 @@ namespace group_14_assignment7
 
         private void UpdatePlaying(GameTime gameTime)
         {
+            
             _player.Update(gameTime);
 
             foreach (Lane lane in _lanes)
@@ -216,6 +225,9 @@ namespace group_14_assignment7
                     break;
                 case GameState.Victory:
                     DrawVictory();
+                    break;
+                case GameState.Paused:
+                    DrawPaused();
                     break;
             }
 
@@ -277,6 +289,24 @@ namespace group_14_assignment7
             _spriteBatch.DrawString(_font, finalScoreText, new Vector2((_graphics.PreferredBackBufferWidth - scoreSize.X) / 2, 320), Color.LightGreen);
 
             string restartText = "Press SPACE to Play Again";
+            Vector2 restartSize = _font.MeasureString(restartText);
+            _spriteBatch.DrawString(_font, restartText, new Vector2((_graphics.PreferredBackBufferWidth - restartSize.X) / 2, 450), Color.LightGray);
+
+            string quitText = "Press ESCAPE to Quit";
+            Vector2 quitSize = _font.MeasureString(quitText);
+            _spriteBatch.DrawString(_font, quitText, new Vector2((_graphics.PreferredBackBufferWidth - quitSize.X) / 2, 510), Color.LightGray);
+        }
+        
+        private void DrawPaused()
+        {
+            Rectangle overlay = new Rectangle(0, 0, _graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight);
+            _spriteBatch.Draw(_pixelTexture, overlay, Color.Black * 0.7f);
+
+            string title = "GAME PAUSED";
+            Vector2 titleSize = _font.MeasureString(title);
+            _spriteBatch.DrawString(_font, title, new Vector2((_graphics.PreferredBackBufferWidth - titleSize.X) / 2, 150), Color.Gold);
+            
+            string restartText = "Press TAB to resume";
             Vector2 restartSize = _font.MeasureString(restartText);
             _spriteBatch.DrawString(_font, restartText, new Vector2((_graphics.PreferredBackBufferWidth - restartSize.X) / 2, 450), Color.LightGray);
 
@@ -347,6 +377,18 @@ namespace group_14_assignment7
             InitializeLanes(carTexture);
 
             _currentState = GameState.Playing;
+        }
+
+        private void PauseGame()
+        {
+            if (_currentState == GameState.Paused)
+            {
+                _currentState = GameState.Playing;
+            }
+            else if (_currentState == GameState.Playing)
+            {
+                _currentState = GameState.Paused;
+            }
         }
     }
 }
