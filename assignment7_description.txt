@@ -32,6 +32,13 @@ The player wins by reaching a score of 50 points or higher, which triggers the V
 Extra Credit Animations:
 The player changes animation based on player input. The idle state and the moving state are separate visuals, and the movement is triggered by player keyboard input.
 
+Extra Credit:
+Animations
+The player changes animation based on player input. The idle state and the moving state are separate visuals, and the movement is triggered by player keyboard input.
+
+Pause screen
+Using the TAB key pauses the game while playing. All vehicles and player input is locked while the pause screen is active. The player can use TAB again to resume, or the escape key to exit the game.
+
 
 
 Class Files:
