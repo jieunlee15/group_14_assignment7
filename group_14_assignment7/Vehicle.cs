@@ -16,10 +16,11 @@ public class Vehicle
     private Vector2 origin;
     
     private bool moveLeft = false;
+    private SpriteEffects spriteEffects;
     
     private Player player;
 
-    public Vehicle(Texture2D texture, Vector2 position, Vector2 velocity, Player player, Vector2 windowBounds, bool moveLeft, float  scale)
+    public Vehicle(Texture2D texture, Vector2 position, Vector2 velocity, Player player, Vector2 windowBounds, bool moveLeft, float scale)
     {
         this.texture = texture;
         this.position = position;
@@ -35,7 +36,7 @@ public class Vehicle
             (int)(texture.Height * scale)
             );
         
-        //origin = new Vector2(texture.Width / 2, texture.Height / 2);
+        spriteEffects = moveLeft ? SpriteEffects.None : SpriteEffects.FlipHorizontally;
     }
 
     public void Move()
@@ -81,7 +82,7 @@ public class Vehicle
             0f,
             Vector2.Zero,
             scale,
-            SpriteEffects.None,
+            spriteEffects,
             0
             );
     }
