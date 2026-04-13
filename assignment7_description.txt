@@ -1,0 +1,98 @@
+Assignment 7 - Crossy Road Game
+Group 14: Tanmayee Bharadwaj (tpb675), Nicco Faelnar (nvf89), Jieun Lee (jl83729)
+
+Our game is a Crossy Road-style arcade game where the player controls a duck navigating across multiple lanes of traffic. The game features grid-based movement, animated sprites, vehicle obstacles, scoring based on distance traveled, and win/lose conditions with end screens.
+
+The player controls a yellow duck that moves in four directions on a grid-based system. The objective is to move forward while avoiding vehicles to reach a target score of 50 points. The game employs smooth hopping animations between grid spaces, collision detection with vehicles, score tracking with high score persistence, and game state management for playing, game over, and victory screens.
+
+
+
+Rules of Play:
+1. The player duck moves one grid space at a time in four directions (up, down, left, right)
+2. Vehicles spawn and move horizontally across lanes at constant speeds
+3. The player loses immediately upon collision with any vehicle
+4. The player's score increases by 1 for each forward grid space traveled
+5. When the player reaches the top of the screen, they respawn at the bottom to continue playing
+6. The game is won by reaching a score of 50 or higher
+
+
+
+Keyboard Controls:
+1. Up Arrow / W - Move player forward (up) one grid space
+2. Down Arrow / S - Move player backward (down) one grid space
+3. Left Arrow / A - Move player left one grid space
+4. Right Arrow / D - Move player right one grid space
+5. Space - Restart game after game over or victory
+6. Escape - Quit game at any time
+
+
+
+Win and Lose Conditions:
+The player wins by reaching a score of 50 points or higher, which triggers the Victory screen displaying the final score and offering options to play again or quit. The player loses by colliding with any vehicle, which immediately triggers the Game Over screen showing the final score, high score, and restart/quit options. The high score persists across game restarts within the same session and updates whenever the player achieves a new personal best.
+Extra Credit Animations:
+The player changes animation based on player input. The idle state and the moving state are separate visuals, and the movement is triggered by player keyboard input.
+
+
+
+Class Files:
+
+Player Class handles all player behavior including movement, animation, and collisions.
+- Processes keyboard input for movement in four directions
+- Smoothly moves the player between grid cells using interpolation
+- Updates animation frames during movement
+- Detects collisions with vehicles
+- Draws the player sprite based on current state
+- Resets player to starting position when needed
+
+Vehicle Class represents moving obstacles that the player must avoid.
+- Moves across the screen based on velocity
+- Wraps around the screen when going off-screen
+- Provides collision bounds for detection
+- Renders the vehicle sprite
+
+
+Lane Class manages the structure and randomness of the game environment.
+- Define lane types (grass, road, river)
+- Control vehicle spawning
+- Adjust difficulty as the game progresses
+- Game1 Class (Main class) controls overall game flow and state transitions
+- Updates gameplay logic (movement, collisions, scoring)
+- Handles game over and victory conditions
+- Draws gameplay and UI screens
+- Resets the game when restarting
+
+
+Individual Work
+
+
+
+Jieun: Player Character & Win/Lose Screens
+
+
+I implemented the player character for our Crossy Road–style game as a grid-based, animated yellow duck. The player moves one tile at a time using keyboard input, but instead of instantly jumping between positions, I used smooth interpolation (Vector2.Lerp) to create a short hopping animation that makes the movement feel more natural. The duck switches between idle and hopping sprites depending on whether it is moving, and its position is tracked both in grid coordinates (for logic) and pixel coordinates (for rendering).
+
+The Player class handles input, movement, animation, and collision detection. Movement is restricted so that the player can only initiate a new move after the current hop finishes, preventing overlapping inputs. Collision detection uses slightly smaller bounding boxes than the sprite size to make gameplay feel more forgiving. If the player collides with a vehicle, the game transitions to a Game Over state.
+I also contributed to implementing the game state system, which includes Playing, Game Over, and Victory modes. The game tracks the player’s score as they move forward, and reaching a target score triggers a victory screen. Both the Game Over and Victory screens display centered text, the player’s score, and instructions to restart or quit. Restarting the game resets the player position and score while keeping the high score. Overall, my focus was on making movement feel smooth and responsive while ensuring clear game feedback through animations and state transitions.
+
+
+
+Nicco: Vehicle Class and Game Logic
+
+
+I implemented the vehicle class which handles the vehicles that move across the screen. The player needs to avoid the vehicles, as colliding with them will result in a lose state. Vehicles simply move left or right across the screen at a constant rate, and when they exit the screen on either side they will teleport back to the other side to pass by again.
+
+Similar to the player, vehicles have a rectangle as a collider that is used to check if the player was hit in Game1. 
+
+I also did some game logic in Game1, specifically the score system and moving screens when the player reaches the top. To make the score system, a variable is kept for the farthest (lowest) grid position the player has reached on the current screen. This makes it so only when the player progresses up past the value, the score will increase. This value resets when the player moves past the top of the screen. Also, when the player moves past the top of the screen they will be put back on the bottom to emulate moving to a new area like in the Zelda series.
+
+
+
+Tanmayee: Lane Class and Car Appearance Frequency/Logic
+
+
+I implemented the Lane class which manages individual lanes that make up the game world. Each lane has a type that determines its behavior. Grass lanes are safe zones where no vehicles spawn, and road lanes contain vehicles the player must avoid. The lane stores its index position, the direction and speed vehicles travel, and a list of all currently active vehicles within it.
+
+The Lane class handles vehicle spawning internally using a timer system. Each update, grass lanes are skipped entirely via an early return. For road lanes, all existing vehicles are moved first, and then the spawn timer only counts up when the lane is completely empty. Once the timer exceeds the spawn interval, a new vehicle is created at the correct edge of the screen – off the right side for leftward lanes and off the left side for rightward lanes. Spawn intervals are set during lane initialization in Game1 and decrease slightly for higher lane indices, so upper lanes have faster and more frequent traffic.
+
+For rendering, the lane tiles its background texture across the full screen width first, then draws all of its vehicles on top. It also exposes a GetActiveVehicles method which Game1 calls each update to check the player's bounds against every vehicle's collider. When a collision is detected, Game1 sets the game state to GameOver and records the high score if the current score exceeds it. This keeps collision and state logic centralized in Game1 while each lane owns and manages its own vehicles.
+
