@@ -178,8 +178,8 @@ namespace group_14_assignment7
             // Collision box (slightly smaller than sprite for better gameplay)
             int boxSize = GRID_SIZE - 10;
             return new Rectangle(
-                (int)PixelPosition.X - boxSize / 2,
-                (int)PixelPosition.Y - boxSize / 2,
+                (int)PixelPosition.X + (GRID_SIZE - boxSize) / 2,
+                (int)PixelPosition.Y + (GRID_SIZE - boxSize) / 2,
                 boxSize,
                 boxSize
             );
@@ -202,12 +202,12 @@ namespace group_14_assignment7
             
             spriteBatch.Draw(
                 currentSprite,
-                PixelPosition,
+                PixelPosition +  new Vector2(GRID_SIZE / 2, GRID_SIZE / 2),
                 null,
                 Color.White,
                 0f,
                 origin,
-                0.3f, // Scale down the duck to fit grid
+                0.2f, // Scale down the duck to fit grid
                 SpriteEffects.None,
                 0f
             );

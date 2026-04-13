@@ -4,7 +4,7 @@
 // group member 3: jieun lee; jl83729
 
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -22,30 +22,31 @@ namespace group_14_assignment7
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        
+
         private Player _player;
         private Texture2D _duckIdle;
         private Texture2D _duckHop;
-        
-        private Texture2D _gridTexture;
+
+        private Texture2D _grassTexture;
+        private Texture2D _roadTexture;
         private Texture2D _pixelTexture;
 
-        private Vehicle[] vehicles;
-        
+        private Lane[] _lanes;
+
         // Game State
         private GameState _currentState;
-        
+
         // Game Logic
         private int score;
         private int highScore;
         private int farthestThisScreen;
-        private const int WIN_SCORE = 50; // Win condition: reach score of 50
-        
+        private const int WIN_SCORE = 50;
+
         private string scoreText = "Score: 0";
         private SpriteFont _font;
         private Vector2 scorePosition;
         private Color scoreColor = Color.White;
-        
+
         // Input
         private KeyboardState _previousKeyState;
 
@@ -54,7 +55,7 @@ namespace group_14_assignment7
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
-            
+
             _graphics.PreferredBackBufferWidth = 640;
             _graphics.PreferredBackBufferHeight = 705;
         }
@@ -66,77 +67,94 @@ namespace group_14_assignment7
             farthestThisScreen = 10;
             _currentState = GameState.Playing;
             _previousKeyState = Keyboard.GetState();
-            
+
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            
-            // Load duck sprites
+
             _duckIdle = Content.Load<Texture2D>("duck_idle");
             _duckHop = Content.Load<Texture2D>("duck_hop");
-            
-            // Create player
+
             _player = new Player(_duckIdle, _duckHop, new Vector2(5, 10));
-            
-            // Create simple grid texture
-            CreateGridTexture();
-            CreatePixelTexture();
-            
-            // Load font
+
+            _grassTexture = CreateGrassTexture();
+            _roadTexture = CreateRoadTexture();
+            _pixelTexture = CreatePixelTexture();
+
             _font = Content.Load<SpriteFont>("font/fredokaOneRegular");
             scoreText = "Score: " + score.ToString();
             scorePosition = new Vector2(5, 5);
-            
-            // Load vehicle
-            vehicles = new Vehicle[1];
-            vehicles[0] = new Vehicle(
-                Content.Load<Texture2D>("vehicles/blueCar"),
-                new Vector2(700, 200),
-                new Vector2(-5, 0),
-                _player,
-                new Vector2(Window.ClientBounds.X, Window.ClientBounds.Y),
-                true,
-                0.2f
-            );
+
+            Texture2D carTexture = Content.Load<Texture2D>("vehicles/blueCar");
+            InitializeLanes(carTexture);
         }
 
-        private void CreateGridTexture()
+        private void InitializeLanes(Texture2D carTexture)
         {
-            _gridTexture = new Texture2D(GraphicsDevice, 64, 64);
+            int screenWidth = _graphics.PreferredBackBufferWidth;
+
+            // 11 rows: row 0 = safe start (grass), rows 1-9 = road lanes, row 10 = safe end (grass)
+            _lanes = new Lane[11];
+
+            _lanes[0] = new Lane(0, LaneType.Grass, Direction.Left, 0, 999f, _grassTexture, null, _player, screenWidth);
+            _lanes[10] = new Lane(10, LaneType.Grass, Direction.Left, 0, 999f, _grassTexture, null, _player, screenWidth);
+
+            for (int i = 1; i <= 9; i++)
+            {
+                Direction dir = (i % 2 == 0) ? Direction.Left : Direction.Right;
+                float speed = 2.5f + (i * 0.3f);
+                float interval = Math.Max(3.0f, 6.0f - (i * 0.2f));
+
+                _lanes[i] = new Lane(i, LaneType.Road, dir, speed, interval, _roadTexture, carTexture, _player, screenWidth);
+            }
+        }
+
+        private Texture2D CreateGrassTexture()
+        {
+            Texture2D tex = new Texture2D(GraphicsDevice, 64, 64);
             Color[] data = new Color[64 * 64];
-            
             for (int i = 0; i < data.Length; i++)
             {
                 int x = i % 64;
                 int y = i / 64;
-                
-                // Draw border
-                if (x == 0 || x == 63 || y == 0 || y == 63)
-                {
-                    data[i] = Color.Gray * 0.5f;
-                }
-                else
-                {
-                    data[i] = Color.DarkGreen * 0.3f;
-                }
+                data[i] = (x == 0 || x == 63 || y == 0 || y == 63)
+                    ? Color.Gray * 0.5f
+                    : Color.DarkGreen * 0.3f;
             }
-            
-            _gridTexture.SetData(data);
+            tex.SetData(data);
+            return tex;
         }
 
-        private void CreatePixelTexture()
+        private Texture2D CreateRoadTexture()
         {
-            _pixelTexture = new Texture2D(GraphicsDevice, 1, 1);
-            _pixelTexture.SetData(new[] { Color.White });
+            Texture2D tex = new Texture2D(GraphicsDevice, 64, 64);
+            Color[] data = new Color[64 * 64];
+            for (int i = 0; i < data.Length; i++)
+            {
+                int x = i % 64;
+                int y = i / 64;
+                data[i] = (x == 0 || x == 63 || y == 0 || y == 63)
+                    ? Color.DarkGray * 0.8f
+                    : Color.Gray * 0.5f;
+            }
+            tex.SetData(data);
+            return tex;
+        }
+
+        private Texture2D CreatePixelTexture()
+        {
+            Texture2D tex = new Texture2D(GraphicsDevice, 1, 1);
+            tex.SetData(new[] { Color.White });
+            return tex;
         }
 
         protected override void Update(GameTime gameTime)
         {
             KeyboardState currentKeyState = Keyboard.GetState();
-            
+
             if (currentKeyState.IsKeyDown(Keys.Escape))
                 Exit();
 
@@ -160,33 +178,26 @@ namespace group_14_assignment7
         private void UpdatePlaying(GameTime gameTime)
         {
             _player.Update(gameTime);
+
+            foreach (Lane lane in _lanes)
+                lane.Update(gameTime);
+
             CheckPlayerCollision();
             UpdateScore();
             CheckPlayerOffScreen();
             CheckWinCondition();
-
-            foreach (Vehicle vehicle in vehicles)
-            {
-                vehicle.Move();
-            }
         }
 
         private void UpdateGameOver(KeyboardState currentKeyState)
         {
-            // Press Space to restart
             if (currentKeyState.IsKeyDown(Keys.Space) && !_previousKeyState.IsKeyDown(Keys.Space))
-            {
                 RestartGame();
-            }
         }
 
         private void UpdateVictory(KeyboardState currentKeyState)
         {
-            // Press Space to restart
             if (currentKeyState.IsKeyDown(Keys.Space) && !_previousKeyState.IsKeyDown(Keys.Space))
-            {
                 RestartGame();
-            }
         }
 
         protected override void Draw(GameTime gameTime)
@@ -194,7 +205,7 @@ namespace group_14_assignment7
             GraphicsDevice.Clear(Color.DarkGreen);
 
             _spriteBatch.Begin();
-            
+
             switch (_currentState)
             {
                 case GameState.Playing:
@@ -207,176 +218,89 @@ namespace group_14_assignment7
                     DrawVictory();
                     break;
             }
-            
-            _spriteBatch.End();
 
+            _spriteBatch.End();
             base.Draw(gameTime);
         }
 
         private void DrawPlaying()
         {
-            // Draw grid
-            DrawGrid();
-            
-            // Draw vehicles
-            foreach (Vehicle vehicle in vehicles)
-            {
-                vehicle.Draw(_spriteBatch);
-            }
-            
-            // Draw player
+            foreach (Lane lane in _lanes)
+                lane.Draw(_spriteBatch);
+
             _player.Draw(_spriteBatch);
-            
-            // Draw score
-            _spriteBatch.DrawString(
-                _font,
-                scoreText,
-                scorePosition,
-                scoreColor,
-                0,
-                Vector2.Zero,
-                1,
-                SpriteEffects.None,
-                0
-            );
+
+            _spriteBatch.DrawString(_font, scoreText, scorePosition, scoreColor, 0, Vector2.Zero, 1, SpriteEffects.None, 0);
         }
 
         private void DrawGameOver()
         {
-            // Semi-transparent dark overlay
             Rectangle overlay = new Rectangle(0, 0, _graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight);
             _spriteBatch.Draw(_pixelTexture, overlay, Color.Black * 0.8f);
-            
-            // Title
+
             string title = "GAME OVER";
             Vector2 titleSize = _font.MeasureString(title);
-            Vector2 titlePosition = new Vector2(
-                (_graphics.PreferredBackBufferWidth - titleSize.X) / 2,
-                150
-            );
-            _spriteBatch.DrawString(_font, title, titlePosition, Color.Red);
-            
-            // Final Score
+            _spriteBatch.DrawString(_font, title, new Vector2((_graphics.PreferredBackBufferWidth - titleSize.X) / 2, 150), Color.Red);
+
             string finalScoreText = "Final Score: " + score;
             Vector2 scoreSize = _font.MeasureString(finalScoreText);
-            Vector2 finalScorePosition = new Vector2(
-                (_graphics.PreferredBackBufferWidth - scoreSize.X) / 2,
-                250
-            );
-            _spriteBatch.DrawString(_font, finalScoreText, finalScorePosition, Color.White);
-            
-            // High Score
+            _spriteBatch.DrawString(_font, finalScoreText, new Vector2((_graphics.PreferredBackBufferWidth - scoreSize.X) / 2, 250), Color.White);
+
             string highScoreText = "High Score: " + highScore;
             Vector2 highScoreSize = _font.MeasureString(highScoreText);
-            Vector2 highScorePosition = new Vector2(
-                (_graphics.PreferredBackBufferWidth - highScoreSize.X) / 2,
-                320
-            );
-            _spriteBatch.DrawString(_font, highScoreText, highScorePosition, Color.Yellow);
-            
-            // Instructions
+            _spriteBatch.DrawString(_font, highScoreText, new Vector2((_graphics.PreferredBackBufferWidth - highScoreSize.X) / 2, 320), Color.Yellow);
+
             string restartText = "Press SPACE to Restart";
             Vector2 restartSize = _font.MeasureString(restartText);
-            Vector2 restartPosition = new Vector2(
-                (_graphics.PreferredBackBufferWidth - restartSize.X) / 2,
-                450
-            );
-            _spriteBatch.DrawString(_font, restartText, restartPosition, Color.LightGray);
-            
+            _spriteBatch.DrawString(_font, restartText, new Vector2((_graphics.PreferredBackBufferWidth - restartSize.X) / 2, 450), Color.LightGray);
+
             string quitText = "Press ESCAPE to Quit";
             Vector2 quitSize = _font.MeasureString(quitText);
-            Vector2 quitPosition = new Vector2(
-                (_graphics.PreferredBackBufferWidth - quitSize.X) / 2,
-                510
-            );
-            _spriteBatch.DrawString(_font, quitText, quitPosition, Color.LightGray);
+            _spriteBatch.DrawString(_font, quitText, new Vector2((_graphics.PreferredBackBufferWidth - quitSize.X) / 2, 510), Color.LightGray);
         }
 
         private void DrawVictory()
         {
-            // Semi-transparent overlay
             Rectangle overlay = new Rectangle(0, 0, _graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight);
             _spriteBatch.Draw(_pixelTexture, overlay, Color.Black * 0.7f);
-            
-            // Title
+
             string title = "VICTORY!";
             Vector2 titleSize = _font.MeasureString(title);
-            Vector2 titlePosition = new Vector2(
-                (_graphics.PreferredBackBufferWidth - titleSize.X) / 2,
-                150
-            );
-            _spriteBatch.DrawString(_font, title, titlePosition, Color.Gold);
-            
-            // Congratulations message
+            _spriteBatch.DrawString(_font, title, new Vector2((_graphics.PreferredBackBufferWidth - titleSize.X) / 2, 150), Color.Gold);
+
             string congrats = "You reached " + WIN_SCORE + " points!";
             Vector2 congratsSize = _font.MeasureString(congrats);
-            Vector2 congratsPosition = new Vector2(
-                (_graphics.PreferredBackBufferWidth - congratsSize.X) / 2,
-                250
-            );
-            _spriteBatch.DrawString(_font, congrats, congratsPosition, Color.White);
-            
-            // Final Score
+            _spriteBatch.DrawString(_font, congrats, new Vector2((_graphics.PreferredBackBufferWidth - congratsSize.X) / 2, 250), Color.White);
+
             string finalScoreText = "Final Score: " + score;
             Vector2 scoreSize = _font.MeasureString(finalScoreText);
-            Vector2 finalScorePosition = new Vector2(
-                (_graphics.PreferredBackBufferWidth - scoreSize.X) / 2,
-                320
-            );
-            _spriteBatch.DrawString(_font, finalScoreText, finalScorePosition, Color.LightGreen);
-            
-            // Instructions
+            _spriteBatch.DrawString(_font, finalScoreText, new Vector2((_graphics.PreferredBackBufferWidth - scoreSize.X) / 2, 320), Color.LightGreen);
+
             string restartText = "Press SPACE to Play Again";
             Vector2 restartSize = _font.MeasureString(restartText);
-            Vector2 restartPosition = new Vector2(
-                (_graphics.PreferredBackBufferWidth - restartSize.X) / 2,
-                450
-            );
-            _spriteBatch.DrawString(_font, restartText, restartPosition, Color.LightGray);
-            
+            _spriteBatch.DrawString(_font, restartText, new Vector2((_graphics.PreferredBackBufferWidth - restartSize.X) / 2, 450), Color.LightGray);
+
             string quitText = "Press ESCAPE to Quit";
             Vector2 quitSize = _font.MeasureString(quitText);
-            Vector2 quitPosition = new Vector2(
-                (_graphics.PreferredBackBufferWidth - quitSize.X) / 2,
-                510
-            );
-            _spriteBatch.DrawString(_font, quitText, quitPosition, Color.LightGray);
-        }
-
-        private void DrawGrid()
-        {
-            int gridSize = 64;
-            int offsetX = 0;
-            int offsetY = 0;
-            
-            // Draw 10x11 grid
-            for (int y = 0; y < 11; y++)
-            {
-                for (int x = 0; x < 10; x++)
-                {
-                    Vector2 position = new Vector2(offsetX + x * gridSize, offsetY + y * gridSize);
-                    _spriteBatch.Draw(_gridTexture, position, Color.White);
-                }
-            }
+            _spriteBatch.DrawString(_font, quitText, new Vector2((_graphics.PreferredBackBufferWidth - quitSize.X) / 2, 510), Color.LightGray);
         }
 
         private void CheckPlayerCollision()
         {
-            foreach (Vehicle vehicle in vehicles)
+            foreach (Lane lane in _lanes)
             {
-                if (_player.GetBounds().Intersects(vehicle.GetCollider()))
+                foreach (Vehicle vehicle in lane.GetActiveVehicles())
                 {
-                    // Player got hit - Game Over!
-                    _player.IsAlive = false;
-                    _currentState = GameState.GameOver;
-                    
-                    // Update high score
-                    if (score > highScore)
+                    if (_player.GetBounds().Intersects(vehicle.GetCollider()))
                     {
-                        highScore = score;
+                        _player.IsAlive = false;
+                        _currentState = GameState.GameOver;
+
+                        if (score > highScore)
+                            highScore = score;
+
+                        return;
                     }
-                    
-                    return;
                 }
             }
         }
@@ -385,12 +309,8 @@ namespace group_14_assignment7
         {
             if (_player.PixelPosition.Y < 0 && !_player._isMoving)
             {
-                // Put player back at the bottom of the screen
                 _player.ResetPosition();
-                // Reset farthest
                 farthestThisScreen = 10;
-                
-                // Place new vehicle lanes (TODO: add more vehicles)
             }
         }
 
@@ -409,37 +329,23 @@ namespace group_14_assignment7
             if (score >= WIN_SCORE)
             {
                 _currentState = GameState.Victory;
-                
-                // Update high score
+
                 if (score > highScore)
-                {
                     highScore = score;
-                }
             }
         }
 
         private void RestartGame()
         {
-            // Reset score
             score = 0;
             farthestThisScreen = 10;
             scoreText = "Score: " + score.ToString();
-            
-            // Reset player
+
             _player.Reset();
-            
-            // Reset vehicles (recreate them at starting positions)
-            vehicles[0] = new Vehicle(
-                Content.Load<Texture2D>("vehicles/blueCar"),
-                new Vector2(700, 200),
-                new Vector2(-5, 0),
-                _player,
-                new Vector2(Window.ClientBounds.X, Window.ClientBounds.Y),
-                true,
-                0.2f
-            );
-            
-            // Return to playing state
+
+            Texture2D carTexture = Content.Load<Texture2D>("vehicles/blueCar");
+            InitializeLanes(carTexture);
+
             _currentState = GameState.Playing;
         }
     }
